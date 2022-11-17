@@ -1,80 +1,45 @@
 # セグメント木（ここでは書籍とは異なり、pos が 0-indexed になるように実装しています）
-class segtree:
-    """区間最大値を計算"""
-
-    # 要素 dat の初期化を行う（最初は全部ゼロ）
-    def __init__(self, n):
-        self.size = 1
-        while self.size < n:
-            self.size *= 2
-        self.dat = [0] * (self.size * 2)
-
-    # クエリ 1 に対する処理
-    def update(self, pos, x):
-        pos += self.size  # pos は 0-indexed なので、A[pos] のみに対応するセルの番号は pos + size
-        self.dat[pos] = x
-        while pos >= 2:
-            pos //= 2
-            self.dat[pos] = max(self.dat[pos * 2], self.dat[pos * 2 + 1])
-
-    # クエリ 2 に対する処理
-    # u は現在のセル番号、[a, b) はセルに対応する半開区間、[l, r) は求めたい半開区間
-    def rmq(self, l, r, a, b, u):
-        if r <= a or b <= l:
-            return -1000000000  # 一切含まれない場合
-        if l <= a and b <= r:
-            return self.dat[u]  # 完全に含まれる場合
-        m = (a + b) // 2
-        answerl = self.rmq(l, r, a, m, u * 2)
-        answerr = self.rmq(l, r, m, b, u * 2 + 1)
-        return max(answerl, answerr)
+def segfunc(x, y):
+    """隣あう2要素に適用する関数"""
+    return x + y
 
 
-# 入力
-N, Q = map(int, input().split())
-queries = [list(map(int, input().split())) for i in range(Q)]
+class SegTree:
+    def __init__(self, init_val, segfunc, ide_ele):
+        n = len(init_val)
+        self.segfunc = segfunc
+        self.ide_ele = ide_ele
+        self.num = 1 << (n - 1).bit_length()
+        self.tree = [ide_ele] * 2 * self.num
+        for i in range(n):
+            self.tree[self.num + i] = init_val[i]
+        for i in range(self.num - 1, 0, -1):
+            self.tree[i] = self.segfunc(self.tree[2 * i], self.tree[2 * i + 1])
 
-# クエリの処理
-Z = segtree(N)
-for q in queries:
-    tp, *cont = q
-    if tp == 1:
-        pos, x = cont
-        Z.update(pos - 1, x)  # pos は 1-indexed で入力されるので、update 関数の引数は pos - 1 にします
-    if tp == 2:
-        l, r = cont
-        answer = Z.rmq(
-            l - 1, r - 1, 0, Z.size, 1
-        )  # 0-indexed の実装では、最初のセルに対応する半開区間は [0, size) です
-        print(answer)
+    def add(self, k, x):
+        k += self.num
+        self.tree[k] += x
+        while k > 1:
+            self.tree[k >> 1] = self.segfunc(self.tree[k], self.tree[k ^ 1])
+            k >>= 1
 
-# セグメント木（ここでは書籍とは異なり、pos が 0-indexed になるように実装しています）
-class segtree:
-    """区間和を計算（要素の更新がないならば累積和で良い）"""
+    def update(self, k, x):
+        k += self.num
+        self.tree[k] = x
+        while k > 1:
+            self.tree[k >> 1] = self.segfunc(self.tree[k], self.tree[k ^ 1])
+            k >>= 1
 
-    # 要素 dat の初期化を行う（最初は全部ゼロ）
-    def __init__(self, n):
-        self.size = 1
-        while self.size < n:
-            self.size *= 2
-        self.dat = [0] * (self.size * 2)
-
-    # クエリ 1 に対する処理
-    def update(self, pos, x):
-        pos += self.size  # pos は 0-indexed なので、A[pos] のみに対応するセルの番号は pos + size
-        self.dat[pos] = x
-        while pos >= 2:
-            pos //= 2
-            self.dat[pos] = self.dat[pos * 2] + self.dat[pos * 2 + 1]  # 8.8 節から変更した部分
-
-    # クエリ 2 に対する処理
-    # u は現在のセル番号、[a, b) はセルに対応する半開区間、[l, r) は求めたい半開区間
-    def rsq(self, l, r, a, b, u):
-        if r <= a or b <= l:
-            return 0  # 8.8 節から変更した部分
-        if l <= a and b <= r:
-            return self.dat[u]
-        m = (a + b) // 2
-        answerl = self.rsq(l, r, a, m, u * 2)
-        answerr = self.rsq(l, r, m, b, u * 2 + 1)
-        return answerl + answerr  # 8.8 節から変更した部分
+    def query(self, l, r):
+        res = self.ide_ele
+        l += self.num
+        r += self.num
+        while l < r:
+            if l & 1:
+                res = self.segfunc(res, self.tree[l])
+                l += 1
+            if r & 1:
+                res = self.segfunc(res, self.tree[r - 1])
+            l >>= 1
+            r >>= 1
+        return res
