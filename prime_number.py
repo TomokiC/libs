@@ -35,6 +35,31 @@ def isprime(a: int) -> bool:
     return True
 
 
+def prime_factorization(n: int) -> list:
+    """
+    素因数分解 O(log(N))
+    task:prime factorization
+    return:prime
+    type:list
+    """
+    lis = []
+    for i in range(2, int(math.sqrt(n)) + 1):  # 割り算のTryは2から、平方根以下まで
+        while True:
+            if n % i == 0:
+                lis.append(i)  # 余り0なら素因数分解リストにappendする
+                n = n // i  # nの更新
+
+            else:
+                break
+
+    if n > int(
+        math.sqrt(n)
+    ):  # nが　int(n**0.5) より大きなポイントでbreakしていたらそれをリストにappend 素数の時もこれ
+        lis.append(n)
+
+    return lis
+
+
 N = 10000000
 st = time.time()
 print(len(calc_prime(N)))
