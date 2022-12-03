@@ -11,23 +11,25 @@ def isOK(index, key):
         return False
 
 
-def binary_serch_(key):
+def binary_serch_():
     """key:keyを与えた時に条件を満たす最小のインデックスを出力
     探索幅を半分にしながら差が１になるまで探索する"""
     # 端の初期地はカスタムする
+    # 最小値-1
     left = -1
-    right = len(a)
+    # 最大値+1
+    right = 10**18
     mergin = 1
 
     # 以下はカスタムしない
     while right - left > mergin:
-        mid = int(left + (right - left) / 2)
+        mid = (left + right) // 2
 
-        if isOK(mid, key):
-            right = mid
-        else:
+        if isOK(mid):
             left = mid
+        else:
+            right = mid
 
-    # ここでrightは条件を満たす最小のインデックス
-    # leftは条件を満たさない最大のインデックスになる
-    return right
+    # ここでrightは条件を満たさない最小のインデックス
+    # leftは条件を満たす最大のインデックスになる
+    return left
